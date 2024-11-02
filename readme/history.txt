@@ -1,3 +1,6 @@
+2024.11.02
+* change: toolbar icons replaced with grayscale variant (from Markus F.)
+
 2024.02.22
 - fix: do not show exception if git is not installed
 
