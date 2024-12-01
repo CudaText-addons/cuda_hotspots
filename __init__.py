@@ -1,4 +1,5 @@
 import os
+import sys
 import re
 import subprocess
 import json
@@ -15,8 +16,10 @@ fn_icon = os.path.join(os.path.dirname(__file__), 'icon.png')
 fn_config = os.path.join(app_path(APP_DIR_SETTINGS), 'cuda_hotspots.ini')
 fn_bookmarks = os.path.join(app_path(APP_DIR_SETTINGS), 'history files.json')
 IS_WIN = os.name=='nt'
+IS_MAC = sys.platform == 'darwin'
 THEME_TOOLBAR_MAIN = 'toolbar_main'
 GIT_SHOW_UNTRACKED_FILES = False
+S_CTRL_API = 'm' if IS_MAC else 'c'
 
 git = ['git', '-c', 'core.quotepath=false']
 
@@ -90,7 +93,12 @@ class Command:
         app_proc(PROC_SIDEPANEL_ACTIVATE, (self.title_side, True)) # True - set focus
 
     def form_key_down(self, id_dlg, id_ctl, data):
-        if id_ctl in [VK_SPACE, VK_ENTER, VK_F4]:
+        if (data == S_CTRL_API and (id_ctl in (ord('c'), ord('C')))): # ctrl+c
+            id_item = tree_proc(self.h_tree, TREE_ITEM_GET_SELECTED)
+            if id_item is not None:
+                hotspot = tree_proc(self.h_tree, TREE_ITEM_GET_PROPS, id_item)
+                app_proc(PROC_SET_CLIP, str(hotspot['text']))
+        elif id_ctl in [VK_SPACE, VK_ENTER, VK_F4]:
             self.callback_list_dblclick(id_dlg, id_ctl, data)
             return False #block key
     
