@@ -445,6 +445,9 @@ class Command:
             ind = dlg_menu(DMENU_LIST+DMENU_CENTERED, items, caption=_('Hotspots'), w=w, h=h)
             if ind is not None:
                 hotspot = hotspots[ind]
-                self.hotspot_open(hotspot['hotspot_type'], hotspot["data"])
+                if 'c' in app_proc(PROC_GET_KEYSTATE, ''): # ctrl+enter
+                    app_proc(PROC_SET_CLIP, str(hotspot['text']))
+                else:
+                    self.hotspot_open(hotspot['hotspot_type'], hotspot["data"])
         else:
             msg_status(_("No hotspots"))
