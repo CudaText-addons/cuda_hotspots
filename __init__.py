@@ -92,6 +92,9 @@ class Command:
         #dlg_proc(self.h_side, DLG_CTL_FOCUS, name='list')
         app_proc(PROC_SIDEPANEL_ACTIVATE, (self.title_side, True)) # True - set focus
 
+        # update list on sidepanel-activate
+        self.action_collect_hotspots()
+
     def form_key_down(self, id_dlg, id_ctl, data):
         if (data == S_CTRL_API and (id_ctl in (ord('c'), ord('C')))): # ctrl+c
             id_item = tree_proc(self.h_tree, TREE_ITEM_GET_SELECTED)
