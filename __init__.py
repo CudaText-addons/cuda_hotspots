@@ -20,6 +20,8 @@ IS_MAC = sys.platform == 'darwin'
 THEME_TOOLBAR_MAIN = 'toolbar_main'
 GIT_SHOW_UNTRACKED_FILES = False
 S_CTRL_API = 'm' if IS_MAC else 'c'
+S_ALT_API = 'a'
+S_SHIFT_API = 's'
 
 git = ['git', '-c', 'core.quotepath=false']
 
@@ -101,7 +103,7 @@ class Command:
             if id_item is not None:
                 hotspot = tree_proc(self.h_tree, TREE_ITEM_GET_PROPS, id_item)
                 app_proc(PROC_SET_CLIP, str(hotspot['text']))
-        elif id_ctl in [VK_SPACE, VK_ENTER, VK_F4]:
+        elif (data not in [S_CTRL_API,S_ALT_API,S_SHIFT_API] and id_ctl in [VK_SPACE, VK_ENTER, VK_F4]):
             self.callback_list_dblclick(id_dlg, id_ctl, data)
             return False #block key
     
@@ -456,7 +458,7 @@ class Command:
             ind = dlg_menu(DMENU_LIST+DMENU_CENTERED, items, caption=_('Hotspots'), w=w, h=h)
             if ind is not None:
                 hotspot = hotspots[ind]
-                if 'c' in app_proc(PROC_GET_KEYSTATE, ''): # ctrl+enter
+                if S_CTRL_API in app_proc(PROC_GET_KEYSTATE, ''): # ctrl+enter
                     app_proc(PROC_SET_CLIP, str(hotspot['text']))
                 else:
                     self.hotspot_open(hotspot['hotspot_type'], hotspot["data"])

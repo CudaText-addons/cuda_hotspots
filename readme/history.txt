@@ -1,3 +1,8 @@
+2024.12.07
++ add: ctrl+enter for copy line in dialog-list
++ add: ctrl+c for copy line in sidebar-list
++ add: update list on sidepanel-activate
+
 2024.11.02
 * change: toolbar icons replaced with grayscale variant (from Markus F.)
 
