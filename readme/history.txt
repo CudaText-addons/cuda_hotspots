@@ -1,7 +1,7 @@
 2024.12.07
-+ add: ctrl+enter for copy line in dialog-list (ildar r. khasanshin)
-+ add: ctrl+c for copy line in sidebar-list (ildar r. khasanshin)
-+ add: update list on sidepanel-activate (ildar r. khasanshin)
++ add: Ctrl+Enter to copy line to clipboard, in dialog-list (ildar r. khasanshin)
++ add: Ctrl+C to copy line to clipboard, in sidebar-list (ildar r. khasanshin)
++ add: update list on side-panel activation (ildar r. khasanshin)
 
 2024.11.02
 * change: toolbar icons replaced with grayscale variant (from Markus F.)
