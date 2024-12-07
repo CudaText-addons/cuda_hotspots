@@ -18,7 +18,11 @@ For filenames in the 'Git' panel item, plugin supports context menu with items:
 - Restore...
 - Diff head
 
-Author: Yuriy Balyuk, https://github.com/veksha
+Hotkeys:
+- Ctrl + Enter - copy line in dialog-list
+- Ctrl + C - copy line in sidebar-list
+
+Author: Yuriy Balyuk, https://github.com/veksha (patches from: ildar r. khasanshin http://github.com/ildarkhasanshin/)
 License: MIT
 Icons: from Lazarus IDE project, free license.
 Sidebar icon: by Markus Feichtinger, mafei at gmx.at, License is free for commercial use.
