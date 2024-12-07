@@ -103,7 +103,7 @@ class Command:
             if id_item is not None:
                 hotspot = tree_proc(self.h_tree, TREE_ITEM_GET_PROPS, id_item)
                 app_proc(PROC_SET_CLIP, str(hotspot['text']))
-        elif (data not in [S_CTRL_API,S_ALT_API,S_SHIFT_API] and id_ctl in [VK_SPACE, VK_ENTER, VK_F4]):
+        elif (data == '' and id_ctl in [VK_SPACE, VK_ENTER, VK_F4]):
             self.callback_list_dblclick(id_dlg, id_ctl, data)
             return False #block key
     

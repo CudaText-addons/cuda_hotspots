@@ -22,7 +22,7 @@ Hotkeys:
 - Ctrl + Enter - copy line in dialog-list
 - Ctrl + C - copy line in sidebar-list
 
-Authors: Yuriy Balyuk, https://github.com/veksha, ildar r. khasanshin http://github.com/ildarkhasanshin/
+Author: Yuriy Balyuk, https://github.com/veksha (patches from: ildar r. khasanshin http://github.com/ildarkhasanshin/)
 License: MIT
 Icons: from Lazarus IDE project, free license.
 Sidebar icon: by Markus Feichtinger, mafei at gmx.at, License is free for commercial use.
