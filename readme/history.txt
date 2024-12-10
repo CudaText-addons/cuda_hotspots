@@ -1,3 +1,6 @@
+2024.12.10
++ add: context-menu of bookmarks in sidebar: group by files / tabs
+
 2024.12.07
 + add: Ctrl+Enter to copy line to clipboard, in dialog-list (ildar r. khasanshin)
 + add: Ctrl+C to copy line to clipboard, in sidebar-list (ildar r. khasanshin)

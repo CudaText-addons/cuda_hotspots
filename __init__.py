@@ -49,12 +49,12 @@ def __git(params, cwd=None):
     if IS_WIN:
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-    
+
     try:
         result = subprocess.run(params, capture_output=True, startupinfo=startupinfo, cwd=cwd)
     except:
         return 1, None
-    
+
     return result.returncode, result.stdout if result.returncode == 0 else result.stderr
 
 def read_specific_line(fpath, line):
@@ -71,6 +71,12 @@ def collect_hotspots(func):
         self.action_collect_hotspots()
     return wrapper
 
+HOMEDIR = os.path.expanduser('~')
+def collapse_filename(fn):
+    if fn.startswith(HOMEDIR):
+        fn = fn.replace(HOMEDIR, '~', 1)
+    return fn
+
 class Command:
     title_side = 'Hotspots'
     h_side = None
@@ -78,6 +84,7 @@ class Command:
     def __init__(self):
         self.h_menu = None
         self.h_tree = None
+        self.group_files = False
 
     def upd_history_combo(self):
         self.input.set_prop(PROP_COMBO_ITEMS, '\n'.join(self.history))
@@ -106,10 +113,10 @@ class Command:
         elif (data == '' and id_ctl in [VK_SPACE, VK_ENTER, VK_F4]):
             self.callback_list_dblclick(id_dlg, id_ctl, data)
             return False #block key
-    
+
     def init_side_form(self):
         h=dlg_proc(0, DLG_CREATE)
-        
+
         dlg_proc(h, DLG_PROP_SET, {
             'keypreview': True,
             'on_key_down': self.form_key_down,
@@ -163,7 +170,7 @@ class Command:
     @collect_hotspots
     def on_save(self, ed_self):
         pass # decorator will trigger on_save
-        
+
     def hotspot_open(self, type, data):
         data = data.split(chr(3))
         if type == 'git':
@@ -174,19 +181,20 @@ class Command:
             if fpath and os.path.isfile(fpath):
                 file_open(fpath) #, options="/preview")
                 ed.focus()
-        elif type  == 'bm':
-            type, fpath, line = data[:3]
-            type = int(type)
-            if type == 1: # file
-                file_open(fpath) #, options="/preview")
-                ed.set_caret(0, int(line))
-            elif type == 2: # unsaved tab
-                handle = int(fpath)
-                for h in ed_handles():
-                    if handle == h:
-                        e = Editor(h)
-                        e.focus()
-                        e.set_caret(0, int(line))
+        elif type == 'bm':
+            if data != ['']:
+                type, fpath, line = data[:3]
+                type = int(type)
+                if type == 1: # file
+                    file_open(fpath) #, options="/preview")
+                    ed.set_caret(0, int(line))
+                elif type == 2: # unsaved tab
+                    handle = int(fpath)
+                    for h in ed_handles():
+                        if handle == h:
+                            e = Editor(h)
+                            e.focus()
+                            e.set_caret(0, int(line))
 
     def callback_list_dblclick(self, id_dlg, id_ctl, data='', info=''):
         id_item = tree_proc(self.h_tree, TREE_ITEM_GET_SELECTED)
@@ -195,6 +203,8 @@ class Command:
             h_parent = props['parent']
             if h_parent:
                 parent_data = tree_proc(self.h_tree, TREE_ITEM_GET_PROPS, h_parent)['data']
+                if props['level'] == 2:
+                    parent_data = tree_proc(self.h_tree, TREE_ITEM_GET_PROPS, tree_proc(self.h_tree, TREE_ITEM_GET_PROPS, h_parent)['parent'])['data']
                 self.hotspot_open(parent_data, props["data"])
 
     def set_imagelist_size(self, imglist):
@@ -216,7 +226,7 @@ class Command:
         tree_proc(self.h_tree, TREE_ITEM_DELETE)
 
         bookmarks = [] # list of tuple (file,line,type)
-        
+
         # create list of opened files, will be used for deduplication.
         opened_files = []
         for h in ed_handles():
@@ -260,35 +270,70 @@ class Command:
                 line_str = e.get_text_line(b['line'])[:100].strip()
                 bookmarks.append((fpath, b['line'], type, line_str))
 
+
         # bookmarks collected: add them to the tree
-        bookmarks_item = None
-        for b in bookmarks:
-            fpath, line, type, line_str = b
-            if not bookmarks_item:
-                bookmarks_item = tree_proc(
-                    self.h_tree,
-                    TREE_ITEM_ADD,
-                    text=_("Bookmarks"),
-                    data='bm'
-                )
-            text = ''
-            data = ''
-            if type == 1: # file
-                # Replace the path before the last folder with "..."
-                last_folder = os.path.basename(os.path.dirname(fpath))
-                last_folder2 = os.path.basename(os.path.dirname(os.path.dirname(fpath)))
-                short_path = fpath
-                if last_folder and last_folder2:
-                    file_name = os.path.basename(fpath)
-                    short_path = os.path.join("...", last_folder, file_name)
-                text = f"{line_str} ({short_path}:{str(line+1)})"
-                data = str(type) + chr(3) + fpath + chr(3) + str(line) + chr(3) + line_str
-            elif type == 2: # unsaved tab
-                fpath, handle = fpath.split(chr(3))
-                text = f"{line_str} ({fpath}:{str(line+1)})"
-                data = str(type) + chr(3) + handle + chr(3) + str(line) + chr(3) + line_str
-            tree_proc(self.h_tree, TREE_ITEM_ADD, id_item=bookmarks_item, text=text, data=data)
-        tree_proc(self.h_tree, TREE_ITEM_UNFOLD_DEEP)
+
+        if self.group_files:
+            bookmarks_item = None
+            current_1 = current_2 = ''
+            for b in bookmarks:
+                fpath, line, type, line_str = b
+                if not bookmarks_item:
+                    bookmarks_item = tree_proc(
+                        self.h_tree,
+                        TREE_ITEM_ADD,
+                        text=_("Bookmarks"),
+                        data='bm'
+                    )
+                text = ''
+                data = ''
+                if type == 1: # file
+                    path_ = collapse_filename(os.path.dirname(fpath))
+                    path__ = fpath
+                    data = str(type) + chr(3) + fpath + chr(3) + str(line) + chr(3) + line_str
+                    if path__ != current_1:
+                        current_1 = path__
+                        handle_1 = tree_proc(self.h_tree, TREE_ITEM_ADD, id_item=bookmarks_item, text=path_)
+                    text = f"{line_str}:{str(line+1)}"
+                    tree_proc(self.h_tree, TREE_ITEM_ADD, id_item=handle_1, text=text, data=data)
+                elif type == 2: # unsaved tab
+                    fpath, handle = fpath.split(chr(3))
+                    data = str(type) + chr(3) + handle + chr(3) + str(line) + chr(3) + line_str
+                    if fpath != current_2:
+                        current_2 = fpath
+                        handle_2 = tree_proc(self.h_tree, TREE_ITEM_ADD, id_item=bookmarks_item, text=current_2, data='')
+                    text = f"{line_str}:{str(line+1)}"
+                    tree_proc(self.h_tree, TREE_ITEM_ADD, id_item=handle_2, text=text, data=data)
+            tree_proc(self.h_tree, TREE_ITEM_UNFOLD, id_item=bookmarks_item)
+        else:
+            bookmarks_item = None
+            for b in bookmarks:
+                fpath, line, type, line_str = b
+                if not bookmarks_item:
+                    bookmarks_item = tree_proc(
+                        self.h_tree,
+                        TREE_ITEM_ADD,
+                        text=_("Bookmarks"),
+                        data='bm'
+                    )
+                text = ''
+                data = ''
+                if type == 1: # file
+                    # Replace the path before the last folder with "..."
+                    last_folder = os.path.basename(os.path.dirname(fpath))
+                    last_folder2 = os.path.basename(os.path.dirname(os.path.dirname(fpath)))
+                    short_path = fpath
+                    if last_folder and last_folder2:
+                        file_name = os.path.basename(fpath)
+                        short_path = os.path.join("...", last_folder, file_name)
+                    text = f"{line_str} ({short_path}:{str(line+1)})"
+                    data = str(type) + chr(3) + fpath + chr(3) + str(line) + chr(3) + line_str
+                elif type == 2: # unsaved tab
+                    fpath, handle = fpath.split(chr(3))
+                    text = f"{line_str} ({fpath}:{str(line+1)})"
+                    data = str(type) + chr(3) + handle + chr(3) + str(line) + chr(3) + line_str
+                tree_proc(self.h_tree, TREE_ITEM_ADD, id_item=bookmarks_item, text=text, data=data)
+            tree_proc(self.h_tree, TREE_ITEM_UNFOLD_DEEP)
 
         # 3. collect modified git repo files
         fpath = ed.get_filename("*")
@@ -394,8 +439,23 @@ class Command:
                     menu_proc(self.h_menu, MENU_ADD,
                               lambda *args, **kwargs: self.git_diff(fpath, top_level),
                               _("Diff unmerged"))
-                    
+
                 menu_proc(self.h_menu, MENU_SHOW)
+        else:
+            if selected_data == 'bm':
+                if not self.h_menu:
+                    self.h_menu = menu_proc(0, MENU_CREATE)
+                menu_proc(self.h_menu, MENU_CLEAR)
+                self.gbf = menu_proc(self.h_menu, MENU_ADD, lambda *args, **kwargs: self.group_by_files(), _("Group by files / tabs"))
+                if self.group_files:
+                    menu_proc(self.gbf, MENU_SET_CHECKED, True)
+                menu_proc(self.h_menu, MENU_SHOW)
+
+    def group_by_files(self):
+        self.group_files = not self.group_files
+        self.action_collect_hotspots()
+
+        return self.group_files
 
     @collect_hotspots
     def git_add(self, filepath, cwd):
@@ -428,14 +488,14 @@ class Command:
         if r:
             w = (r[2]-r[0]) * 2 // 3
             h = (r[3]-r[1]) // 2
-    
+
         return w, h
 
     def go_to_hotspot(self):
         hotspots = []
         self.action_collect_hotspots()
         items = tree_proc(self.h_tree, TREE_ITEM_ENUM_EX)
-        
+
         if items is not None:
             for item_parent in items:
                 items = tree_proc(self.h_tree, TREE_ITEM_ENUM_EX, item_parent['id'])
@@ -443,7 +503,7 @@ class Command:
                     continue
                 for item in items:
                     hotspots.append({'text': item['text'], 'hotspot_type': item_parent['data'], 'data': item['data']})
-            
+
             items = []
             for i in hotspots:
                 if i['hotspot_type'] == 'git':
@@ -453,7 +513,7 @@ class Command:
                 elif i['hotspot_type'] == 'bm':
                     fpath, line, line_str = i['data'].split(chr(3))[1:]
                     items.append(f"{line_str}\t{fpath}:{str(int(line)+1)}")
-            
+
             w, h = self.get_w_h()
             ind = dlg_menu(DMENU_LIST+DMENU_CENTERED, items, caption=_('Hotspots'), w=w, h=h)
             if ind is not None:
