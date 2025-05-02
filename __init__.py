@@ -60,7 +60,7 @@ def __git(params, cwd=None):
 
 def read_specific_line(fpath, line):
     with open(fpath, 'rb') as f:
-        data = f.read()
+        data = f.read(1024) # read only first Kb of file
     result = chardet.detect(data)
     encoding = result['encoding']
     with open(fpath, encoding=encoding, errors='replace') as input_file:
