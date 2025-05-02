@@ -3,9 +3,9 @@ title=Hotspots
 desc=Gives panel to show all existing bookmarks to jump to; also shows Git modified/untracked files
 type=cudatext-plugin
 subdir=cuda_hotspots
-homepage=https://github.com/veksha/cuda_hotspots
+homepage=https://github.com/CudaText-addons/cuda_hotspots
 
-[item1]
+[disabled_item1]
 section=events
 events=on_save~
 
