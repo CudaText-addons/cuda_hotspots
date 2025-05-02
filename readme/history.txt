@@ -1,3 +1,6 @@
+2025.05.02
+* change: disabled on_save handler, to avoid very long collecting of bookmarks in big _closed_ files during file-saving (Alexey T.)
+
 2025.01.13
 - fix: crash on showing bookmarks from UTF-16 encoded _closed_ file (by Alexey T.)
 
