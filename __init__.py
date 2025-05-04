@@ -58,11 +58,13 @@ def __git(params, cwd=None):
     
     return result.returncode, result.stdout if result.returncode == 0 else result.stderr
 
-def read_specific_line(fpath, line):
+def detect_encoding(fpath):
     with open(fpath, 'rb') as f:
         data = f.read(512) # read only first kilobyte
     result = chardet.detect(data)
-    encoding = result['encoding']
+    return result['encoding']
+
+def read_specific_line(fpath, line, encoding):
     with open(fpath, encoding=encoding, errors='replace') as input_file:
         line = next(islice(input_file, line, line+1), None)
         if line is not None:
@@ -236,19 +238,27 @@ class Command:
                 bookmarks_json = json.load(file)
         except:
             pass
+
+        bm_dict = {}
         if bookmarks_json and 'bookmarks' in bookmarks_json:
             for k, v in bookmarks_json['bookmarks'].items():
                 fpath = k.replace("|", os.path.sep)
-                fpath_expanded = os.path.expanduser(fpath) # expand "~" for linux
-                if fpath_expanded in opened_files:
+                fpath = os.path.expanduser(fpath) # expand "~" for linux
+                if fpath in opened_files:
                     continue # deduplication: we don't want info from json, if we can get fresh info from opened tab
-                line_numbers = v.split(' ')
-                line_numbers.reverse()
-                for number in line_numbers:
-                    m = re.match(r'^\d+', number)
-                    line = int(m.group()) if m else None
-                    if line is not None and os.path.isfile(fpath_expanded):
-                        bookmarks.append((fpath_expanded, line, 1, read_specific_line(fpath_expanded, line)))
+                if not os.path.isfile(fpath):
+                    continue
+                enc = detect_encoding(fpath)
+                nums = v.split(' ')
+                nums.reverse()
+                bm_dict[fpath] = (enc, nums)
+
+        for fpath, (enc, nums) in bm_dict.items():
+            for number in nums:
+                m = re.match(r'^\d+', number)
+                line = int(m.group()) if m else None
+                if line is not None:
+                    bookmarks.append((fpath, line, 1, read_specific_line(fpath, line, enc)))
 
         # 2. collect bookmarks of opened tabs
         for h in ed_handles():
