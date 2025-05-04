@@ -238,7 +238,7 @@ class Command:
         except:
             pass
 
-        bm_dict = {}
+        bm_list = []
         if bookmarks_json and 'bookmarks' in bookmarks_json:
             for k, v in bookmarks_json['bookmarks'].items():
                 fpath = k.replace("|", os.path.sep)
@@ -251,9 +251,9 @@ class Command:
                 nums = v.split(' ')
                 nums.reverse()
                 nums = [int(s.split(',')[0]) for s in nums]
-                bm_dict[fpath] = (enc, nums)
+                bm_list.append((fpath, enc, nums))
 
-        for fpath, (enc, nums) in bm_dict.items():
+        for fpath, enc, nums in bm_list:
             for num in nums:
                 bookmarks.append((fpath, num, 1, read_specific_line(fpath, num, enc)))
 
