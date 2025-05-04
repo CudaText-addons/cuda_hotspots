@@ -63,13 +63,6 @@ def detect_encoding(fpath):
     result = chardet.detect(data)
     return result['encoding']
 
-def read_specific_line(fpath, line, encoding):
-    with open(fpath, encoding=encoding, errors='replace') as input_file:
-        line = next(islice(input_file, line, line+1), None)
-        if line is not None:
-            return line[:100].strip()
-    return ""
-
 def collect_hotspots(func):
     def wrapper(self, *args, **kwargs):
         func(self, *args, **kwargs)
@@ -254,8 +247,14 @@ class Command:
                 bm_list.append((fpath, enc, nums))
 
         for fpath, enc, nums in bm_list:
+            input_file = open(fpath, encoding=enc, errors='replace')
+            lines = input_file.readlines()
             for num in nums:
-                bookmarks.append((fpath, num, 1, read_specific_line(fpath, num, enc)))
+                if 0<=num<len(lines):
+                    line = lines[num]
+                    line = line[:100].strip()
+                    bookmarks.append((fpath, num, 1, line))
+            del input_file
 
         # 2. collect bookmarks of opened tabs
         for h in ed_handles():
