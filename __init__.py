@@ -162,9 +162,9 @@ class Command:
     def on_save(self, ed_self):
         pass # decorator will trigger on_save
         
-    def hotspot_open(self, type, data):
+    def hotspot_open(self, kind, data):
         data = data.split(chr(3))
-        if type == 'git':
+        if kind == 'git':
             top_level, fpathpart = data[:2]
             if " -> " in fpathpart:
                 fpathpart = fpathpart.split(" -> ")[1]
@@ -172,13 +172,13 @@ class Command:
             if fpath and os.path.isfile(fpath):
                 file_open(fpath) #, options="/preview")
                 ed.focus()
-        elif type  == 'bm':
-            type, fpath, line = data[:3]
-            type = int(type)
-            if type == 1: # file
+        elif kind  == 'bm':
+            kind, fpath, line = data[:3]
+            kind = int(kind)
+            if kind == 1: # file
                 file_open(fpath) #, options="/preview")
                 ed.set_caret(0, int(line))
-            elif type == 2: # unsaved tab
+            elif kind == 2: # unsaved tab
                 handle = int(fpath)
                 for h in ed_handles():
                     if handle == h:
@@ -213,7 +213,7 @@ class Command:
             self.init_forms()
         tree_proc(self.h_tree, TREE_ITEM_DELETE)
 
-        bookmarks = [] # list of tuple (file,line,type)
+        bookmarks = [] # list of tuple (filename, line_index, kind, line_str)
         
         # create list of opened files, will be used for deduplication.
         opened_files = []
@@ -263,17 +263,17 @@ class Command:
             bookmarks_tab.reverse()
             for b in bookmarks_tab:
                 fpath = e.get_filename("*")
-                type = 1 # file
+                kind = 1 # file
                 if not fpath:
                     fpath = e.get_prop(PROP_TAB_TITLE) + chr(3) + str(h)
-                    type = 2 # unsaved tab
+                    kind = 2 # unsaved tab
                 line_str = e.get_text_line(b['line'])[:100].strip()
-                bookmarks.append((fpath, b['line'], type, line_str))
+                bookmarks.append((fpath, b['line'], kind, line_str))
 
         # bookmarks collected: add them to the tree
         bookmarks_item = None
         for b in bookmarks:
-            fpath, line, type, line_str = b
+            fpath, line, kind, line_str = b
             if not bookmarks_item:
                 bookmarks_item = tree_proc(
                     self.h_tree,
@@ -283,7 +283,7 @@ class Command:
                 )
             text = ''
             data = ''
-            if type == 1: # file
+            if kind == 1: # file
                 # Replace the path before the last folder with "..."
                 last_folder = os.path.basename(os.path.dirname(fpath))
                 last_folder2 = os.path.basename(os.path.dirname(os.path.dirname(fpath)))
@@ -292,11 +292,11 @@ class Command:
                     file_name = os.path.basename(fpath)
                     short_path = os.path.join("...", last_folder, file_name)
                 text = f"{line_str} ({short_path}:{str(line+1)})"
-                data = str(type) + chr(3) + fpath + chr(3) + str(line) + chr(3) + line_str
-            elif type == 2: # unsaved tab
+                data = str(kind) + chr(3) + fpath + chr(3) + str(line) + chr(3) + line_str
+            elif kind == 2: # unsaved tab
                 fpath, handle = fpath.split(chr(3))
                 text = f"{line_str} ({fpath}:{str(line+1)})"
-                data = str(type) + chr(3) + handle + chr(3) + str(line) + chr(3) + line_str
+                data = str(kind) + chr(3) + handle + chr(3) + str(line) + chr(3) + line_str
             tree_proc(self.h_tree, TREE_ITEM_ADD, id_item=bookmarks_item, text=text, data=data)
         tree_proc(self.h_tree, TREE_ITEM_UNFOLD_DEEP)
 
