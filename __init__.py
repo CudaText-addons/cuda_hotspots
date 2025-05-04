@@ -23,7 +23,6 @@ GIT_SHOW_UNTRACKED_FILES = False
 S_CTRL_API = 'm' if IS_MAC else 'c'
 S_ALT_API = 'a'
 S_SHIFT_API = 's'
-REGEX_NUMBER = re.compile(r'^\d+')
 
 git = ['git', '-c', 'core.quotepath=false']
 
@@ -252,14 +251,12 @@ class Command:
                 enc = detect_encoding(fpath)
                 nums = v.split(' ')
                 nums.reverse()
+                nums = [int(s.split(',')[0]) for s in nums]
                 bm_dict[fpath] = (enc, nums)
 
         for fpath, (enc, nums) in bm_dict.items():
-            for number in nums:
-                m = re.match(REGEX_NUMBER, number)
-                line = int(m.group()) if m else None
-                if line is not None:
-                    bookmarks.append((fpath, line, 1, read_specific_line(fpath, line, enc)))
+            for num in nums:
+                bookmarks.append((fpath, num, 1, read_specific_line(fpath, num, enc)))
 
         # 2. collect bookmarks of opened tabs
         for h in ed_handles():
