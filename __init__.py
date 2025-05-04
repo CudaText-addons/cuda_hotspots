@@ -254,6 +254,7 @@ class Command:
                     line = lines[num]
                     line = line[:100].strip()
                     bookmarks.append((fpath, num, 1, line))
+            del lines
             del input_file
 
         # 2. collect bookmarks of opened tabs
