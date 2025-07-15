@@ -12,9 +12,11 @@ from cudatext_keys import *
 from cudax_lib import get_translation
 _ = get_translation(__file__)  # i18n
 
+OS_SUFFIX = app_proc(PROC_GET_OS_SUFFIX, '')
+NEW_BM_FILENAME = app_exe_version()>='1.226.0.0'
 fn_icon = os.path.join(os.path.dirname(__file__), 'icon.png')
 fn_config = os.path.join(app_path(APP_DIR_SETTINGS), 'cuda_hotspots.ini')
-fn_bookmarks = os.path.join(app_path(APP_DIR_SETTINGS), 'history files.json')
+fn_bookmarks = os.path.join(app_path(APP_DIR_SETTINGS), ('bookmarks'+OS_SUFFIX+'.json' if NEW_BM_FILENAME else 'history files.json'))
 IS_WIN = os.name=='nt'
 IS_MAC = sys.platform == 'darwin'
 THEME_TOOLBAR_MAIN = 'toolbar_main'
@@ -232,8 +234,9 @@ class Command:
             pass
 
         bm_list = []
-        if bookmarks_json and 'bookmarks' in bookmarks_json:
-            for k, v in bookmarks_json['bookmarks'].items():
+        if bookmarks_json:
+            bm_items = bookmarks_json.get('bookmarks', {}).items() if not NEW_BM_FILENAME else bookmarks_json.items()
+            for k, v in bm_items:
                 fpath = k.replace("|", os.path.sep)
                 fpath = os.path.expanduser(fpath) # expand "~" for linux
                 if fpath in opened_files:

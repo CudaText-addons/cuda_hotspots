@@ -1,3 +1,6 @@
+2025.07.15:
+- fix: adapt to new filename bookmarks[SUFFIX].json of CudaText 1.226
+
 2025.05.02
 * change: disabled on_save handler, to avoid very long collecting of bookmarks in big _closed_ files during file-saving (Alexey T.)
 
